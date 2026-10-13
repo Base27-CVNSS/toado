@@ -1,0 +1,5 @@
+id,dia_chi,ghi_chu
+1,"Phường Sài Gòn, Thành phố Hồ Chí Minh",Điểm đại diện đơn vị hành chính nếu chưa có geocoder
+2,"Phường Bến Thành, Thành phố Hồ Chí Minh",Kiểm tra tên hành chính mới
+3,"Hà Nội",Chỉ có cấp tỉnh
+4,"Địa chỉ chưa xác định",Phải giữ trạng thái chưa có tọa độ

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tọa Độ Việt Nam: tải CSV, bổ sung tọa độ và thông tin hành chính Việt Nam, xuất Excel tối đa 10.000 địa chỉ.">
+  <title>Tọa Độ Việt Nam · CSV → Excel</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+ <div class="shell">
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-mark">VN</span><span><b>TỌA ĐỘ</b><small>VIETNAM GEO DATA</small></span></a>
+    <div class="topright"><span class="flag">🇻🇳 Việt Nam</span><a href="https://github.com/Base27-CVNSS/toado" target="_blank" rel="noopener">Mã nguồn ↗</a></div>
+  </header>
+  <main>
+    <div class="hero">
+      <div class="eyebrow"><span class="green-dot"></span> CSV → TỌA ĐỘ → HÀNH CHÍNH → EXCEL</div>
+      <h1>10.000 địa chỉ.<br><em>Một lần tải lên.</em></h1>
+      <p>Tự động nhận diện cột địa chỉ, đối chiếu đơn vị hành chính Việt Nam sau sắp xếp 2025, xử lý dữ liệu theo lô và xuất bảng Excel có trạng thái kiểm chứng cho từng dòng.</p>
+    </div>
+    <section class="upload" id="dropzone" aria-label="Tải CSV">
+      <input type="file" id="file" accept=".csv,text/csv" aria-label="Chọn tệp CSV">
+      <div class="upload-icon">↑</div>
+      <h2>Kéo và thả CSV vào đây</h2>
+      <p>Hoặc <button id="browse" type="button" class="linkbutton">chọn tệp từ thiết bị</button></p>
+      <div class="upload-foot"><span>CSV UTF-8 / UTF-8 BOM</span><span>Giới hạn 10.000 dòng dữ liệu</span><span>Tự nhận diện dấu phẩy / chấm phẩy</span></div>
+    </section>
+    <div class="top-actions"><button id="sample" class="textbutton" type="button">↓ Tải CSV mẫu</button><span id="datasetStatus" class="dataset-status" role="status">Đang tải danh mục hành chính…</span></div>
+    <div id="notification" class="notification hidden" role="alert"></div>
+    <section class="workspace hidden" id="workspace">
+      <div class="workspace-head">
+        <div><div class="section-kicker">TỆP ĐÃ NHẬN</div><h2 id="filename">—</h2><p id="filemeta">—</p></div>
+        <div class="action-group">
+          <button class="btn secondary" id="rerun" type="button">↻ Chạy lại</button>
+          <button class="btn secondary hidden" id="stop" type="button">■ Dừng</button>
+          <button class="btn primary" id="export" type="button" disabled>↓ Xuất Excel (.xlsx)</button>
+        </div>
+      </div>
+      <div class="cards" aria-label="Thống kê tiến độ">
+        <div class="stat"><span>Tổng địa chỉ</span><strong id="total">0</strong><small>Giới hạn 10.000</small></div>
+        <div class="stat"><span>Đã xử lý</span><strong id="processed">0</strong><small id="percent">0%</small></div>
+        <div class="stat"><span>Có tọa độ</span><strong id="located">0</strong><small>Gồm cả điểm tham chiếu</small></div>
+        <div class="stat"><span>Cần kiểm tra</span><strong id="review">0</strong><small>Chưa xác định / độ chính xác thấp</small></div>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar"><div id="progress"></div></div><div class="progress-label"><span id="runstatus">Sẵn sàng</span><span id="progressNumber">0 / 0</span></div></div>
+      <div class="table-head"><div><h3>Kết quả xử lý</h3><p>Hiển thị tối đa 100 dòng; Excel chứa toàn bộ dữ liệu và cột CSV gốc.</p></div><div class="table-actions"><select id="statusfilter" aria-label="Lọc kết quả"><option value="all">Tất cả trạng thái</option><option value="exact">Tọa độ đầu vào / Geocode</option><option value="approx">Điểm tham chiếu</option><option value="missing">Chưa có tọa độ</option></select></div></div>
+      <div class="table-scroller"><table><thead><tr><th>#</th><th>Địa chỉ gốc</th><th>Vĩ độ</th><th>Kinh độ</th><th>Tỉnh/thành 2025</th><th>Xã/phường 2025</th><th>Chất lượng</th></tr></thead><tbody id="results"></tbody></table></div>
+    </section>
+    <details class="settings" id="settings">
+      <summary><span>⚙ Cấu hình dịch vụ định vị địa chỉ chi tiết</span><small>Không bắt buộc · dành cho đơn vị triển khai</small></summary>
+      <div class="settings-body">
+        <label for="endpoint">URL API Geocoding riêng (Cloudflare Worker hoặc máy chủ nội bộ)</label>
+        <input id="endpoint" type="url" placeholder="https://ten-worker.workers.dev/api/geocode" autocomplete="off" spellcheck="false">
+        <p>Để xác định tọa độ nhà/số đường cho 10.000 địa chỉ, quản trị viên cần triển khai API riêng với nhà cung cấp geocoding có quota phù hợp. Nếu không có API, hệ thống chỉ xuất <strong>điểm đại diện cấp xã/tỉnh</strong> khi nhận diện được đơn vị hành chính trong địa chỉ; đó <strong>không phải</strong> tọa độ nhà.</p>
+        <div class="setting-row"><label for="pace">Giãn cách truy vấn (ms)</label><input type="number" id="pace" value="500" min="100" max="10000" step="100"><span>Mặc định 500 ms/lượt, tuần tự; chỉnh theo giới hạn dịch vụ riêng.</span></div>
+        <p class="privacy">Dữ liệu CSV được xử lý trên trình duyệt. Chỉ các địa chỉ cần geocoding mới được gửi tới URL API khi bạn cấu hình; hãy tuân thủ quy định về dữ liệu cá nhân và quota của nhà cung cấp.</p>
+      </div>
+    </details>
+    <section class="how">
+      <div><span class="number">01</span><h3>Nhập CSV</h3><p>Cần cột <b>dia_chi</b>, <b>địa chỉ</b> hoặc <b>address</b>; cũng hỗ trợ cột lat/lon có sẵn.</p></div>
+      <div><span class="number">02</span><h3>Đối chiếu & định vị</h3><p>Nhận diện tỉnh, xã và mã hành chính theo danh mục 2025; phân biệt điểm đại diện và geocode địa chỉ.</p></div>
+      <div><span class="number">03</span><h3>Xuất Excel</h3><p>Nhận đầy đủ dữ liệu gốc, tọa độ WGS84, tên/mã hành chính, phương pháp, tình trạng và danh sách cần rà soát.</p></div>
+    </section>
+  </main>
+  <footer><span>TOADO · LONG NGO 2026 · <a href="https://github.com/Base27-CVNSS/toado">GitHub</a></span><span>Dữ liệu hành chính: <a href="https://github.com/open-admin-data/vietnam-administrative-divisions">Open Admin Data</a> (CC BY 4.0). Thông tin hành chính cần được đối chiếu khi sử dụng pháp lý.</span></footer>
+ </div>
+</body>
+</html>

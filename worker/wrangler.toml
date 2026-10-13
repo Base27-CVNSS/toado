@@ -1,0 +1,6 @@
+name = "toado-geocoder"
+main = "index.js"
+compatibility_date = "2026-10-01"
+
+# Supply a secret: npx wrangler secret put GEOAPIFY_API_KEY
+# To restrict browser origins, set ALLOWED_ORIGIN as an environment variable.
